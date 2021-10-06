@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30517.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParallelObjectDetection", "ParallelObjectDetection.csproj", "{6E78FE3B-D943-4F12-B0D9-ECCBCA3A84A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoloV4ObjectDetector", "..\YoloV4ObjectDetector\YoloV4ObjectDetector.csproj", "{ABFDC182-CF9D-40E7-B25B-85513DED48E1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6E78FE3B-D943-4F12-B0D9-ECCBCA3A84A2} = {6E78FE3B-D943-4F12-B0D9-ECCBCA3A84A2}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6E78FE3B-D943-4F12-B0D9-ECCBCA3A84A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E78FE3B-D943-4F12-B0D9-ECCBCA3A84A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E78FE3B-D943-4F12-B0D9-ECCBCA3A84A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E78FE3B-D943-4F12-B0D9-ECCBCA3A84A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABFDC182-CF9D-40E7-B25B-85513DED48E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABFDC182-CF9D-40E7-B25B-85513DED48E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABFDC182-CF9D-40E7-B25B-85513DED48E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABFDC182-CF9D-40E7-B25B-85513DED48E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FAA38215-937D-49EB-9050-E90C61FB2FA5}
+	EndGlobalSection
+EndGlobal
