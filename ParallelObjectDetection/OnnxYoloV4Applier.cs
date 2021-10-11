@@ -42,7 +42,7 @@ namespace ParallelObjectDetection
             {
                 var detectedObjects = ApplyOnImage(imagePath);
                 result.Add(imagePath, detectedObjects);
-            }, new ExecutionDataflowBlockOptions{ MaxDegreeOfParallelism = 4 });
+            }, new ExecutionDataflowBlockOptions{ MaxDegreeOfParallelism = 32 });
 
             var buffer = new BufferBlock<string>();
             buffer.LinkTo(modelApplier);
