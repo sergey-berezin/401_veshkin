@@ -26,7 +26,7 @@ namespace YoloV4ObjectDetector
 
             var modelApplier = new OnnxYoloV4Applier(modelPath);
 
-            var recieveResults = Task.Run(() =>
+            var recieveResults = Task.Factory.StartNew(() =>
             {
                 while (!foundAllObjects)
                 {
@@ -35,14 +35,10 @@ namespace YoloV4ObjectDetector
                         Console.WriteLine($"Found {value.Value.Label} on {value.Key}");
                     }
                 }
-            });
+            }, TaskCreationOptions.LongRunning);
 
-            var detectObjects = Task.Run(async () => {
-                await modelApplier.ApplyOnImages(imagePaths);
-                foundAllObjects = true;
-            });
-
-            await Task.WhenAll(detectObjects, recieveResults);
+            await modelApplier.ApplyOnImagesAsync(imagePaths);
+            foundAllObjects = true;
         }
     }
 }

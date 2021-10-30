@@ -33,7 +33,7 @@ namespace ParallelObjectDetection
             return (List<YoloV4Result>) predict.GetResults(foundObjectsBuffer, imagePath, classesNames, 0.3f, 0.7f);
         }
 
-        public async Task<Dictionary<string, List<YoloV4Result>>> ApplyOnImages(List<string> imagePaths)
+        public async Task<Dictionary<string, List<YoloV4Result>>> ApplyOnImagesAsync(List<string> imagePaths)
         {
             foundObjectsBuffer = new BufferBlock<KeyValuePair<string, YoloV4Result>>();
             var result = new Dictionary<string, List<YoloV4Result>>();
@@ -42,7 +42,7 @@ namespace ParallelObjectDetection
             {
                 var detectedObjects = ApplyOnImage(imagePath);
                 result.Add(imagePath, detectedObjects);
-            }, new ExecutionDataflowBlockOptions{ MaxDegreeOfParallelism = 32 });
+            }, new ExecutionDataflowBlockOptions{ MaxDegreeOfParallelism = Environment.ProcessorCount });
 
             var buffer = new BufferBlock<string>();
             buffer.LinkTo(modelApplier);
