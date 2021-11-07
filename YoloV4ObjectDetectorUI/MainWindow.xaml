@@ -1,0 +1,61 @@
+﻿<Window x:Class="YoloV4ObjectDetectorUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:YoloV4ObjectDetectorUI"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="700" Width="1300">
+    <Grid>
+        <StackPanel Grid.Column="0">
+            <Border Background="White" Margin="20 30 20 0" VerticalAlignment="Top" Padding="20" CornerRadius="5">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" Color="LightGray" ShadowDepth="0"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock x:Name="curDirTextBox" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                    <Button Click="SetDir_Click" Margin="20 10 20 0" Padding="10" Content="Выбрать директорию с изображениями"/>
+                    <Button Click="DetectObjects_Click" Margin="20 10 20 0" Padding="10" Content="Начать детекцию"/>
+                    <Button Click="StopObjectsDetection_Click" Margin="20 10 20 0" Padding="10" Content="Остановить детекцию"/>
+                    <TextBlock x:Name="modelPathTextBox" TextWrapping="Wrap" Margin="20 10 20 0" HorizontalAlignment="Center"/>
+                    <Button Click="SetModelPath_Click" Margin="20 10 20 0" Padding="10" Content="Задать путь до модели"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1">
+            <Border Background="White" Margin="20 30 20 0" VerticalAlignment="Top" Padding="20" CornerRadius="5">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" Color="LightGray" ShadowDepth="0"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap" HorizontalAlignment="Center" Text="Найденые классы объектов:"/>
+                    <ListBox Name="Categories_ListBox" PreviewMouseDown="Categories_ListBox_PreviewMouseDown" Padding="10" Margin="20 30 20 0" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2">
+            <Border Background="White" Margin="20 30 20 0" VerticalAlignment="Top" Padding="20" CornerRadius="5">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" Color="LightGray" ShadowDepth="0"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Name="foundImagesClassName"  Margin="0 0 0 30" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                    <ScrollViewer MaxHeight="500">
+                        <StackPanel x:Name="ImagesPanel"/>
+                    </ScrollViewer>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+    </Grid>
+</Window>
