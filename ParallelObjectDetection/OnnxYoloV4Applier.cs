@@ -16,6 +16,7 @@ namespace ParallelObjectDetection
         string modelPath;
         string[] classesNames;
         public BufferBlock<KeyValuePair<string, YoloV4Result>> foundObjectsBuffer;
+        public bool StopDetection = false;
 
         // Model is available here: https://github.com/onnx/models/tree/master/vision/object_detection_segmentation/yolov4
         public OnnxYoloV4Applier(string modelPath = "../../../../ParallelObjectDetection/yolov4.onnx")
@@ -23,6 +24,12 @@ namespace ParallelObjectDetection
             classesNames = PredictionUtils.classesNames;
             this.modelPath = modelPath;
             foundObjectsBuffer = new BufferBlock<KeyValuePair<string, YoloV4Result>>();
+        }
+
+        public void TryInstanciateModel()
+        {
+            MLContext mlContext = new MLContext();
+            _ = PredictionUtils.GeneratePredictionEngine(mlContext, modelPath);
         }
 
         public List<YoloV4Result> ApplyOnImage(string imagePath)
@@ -35,11 +42,16 @@ namespace ParallelObjectDetection
 
         public async Task<Dictionary<string, List<YoloV4Result>>> ApplyOnImagesAsync(List<string> imagePaths)
         {
+            StopDetection = false;
             foundObjectsBuffer = new BufferBlock<KeyValuePair<string, YoloV4Result>>();
             var result = new Dictionary<string, List<YoloV4Result>>();
 
             var modelApplier = new ActionBlock<string>(imagePath =>
             {
+                if (StopDetection)
+                {
+                    return;
+                }
                 var detectedObjects = ApplyOnImage(imagePath);
                 result.Add(imagePath, detectedObjects);
             }, new ExecutionDataflowBlockOptions{ MaxDegreeOfParallelism = Environment.ProcessorCount });
