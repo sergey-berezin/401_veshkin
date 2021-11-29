@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks.Dataflow;
 using ParallelObjectDetection;
 using System.Diagnostics;
+using System.IO;
 
 namespace YoloV4ObjectDetectorUI
 {
@@ -31,7 +32,7 @@ namespace YoloV4ObjectDetectorUI
 
         string curCategory = null;
 
-        private Dictionary<string, List<string>> foundCategories = new Dictionary<string, List<string>>();
+        private Dictionary<string, List<Tuple<string, int[]>>> foundCategories = new Dictionary<string, List<Tuple<string, int[]>>>();
 
         OnnxYoloV4Applier modelApplier = null;
 
@@ -44,6 +45,7 @@ namespace YoloV4ObjectDetectorUI
             modelApplier = new OnnxYoloV4Applier(modelPath);
 
             Categories_ListBox.ItemsSource = foundCategories.Keys;
+            reloadDB();
         }
 
         private void SetDir_Click(object sender, RoutedEventArgs e)
@@ -82,7 +84,7 @@ namespace YoloV4ObjectDetectorUI
 
         private void DetectObjects_Click(object sender, RoutedEventArgs e)
         {
-            foundCategories = new Dictionary<string, List<string>>();
+            foundCategories = new Dictionary<string, List<Tuple<string, int[]>>>();
             Categories_ListBox.ItemsSource = foundCategories.Keys;
             var t = Task.Factory.StartNew(async () =>
             {
@@ -100,21 +102,36 @@ namespace YoloV4ObjectDetectorUI
                         {
                             var category = value.Value.Label;
                             var imagePath = value.Key;
+                            float[] floatCoords = value.Value.BBox;
+                            int[] coords = {
+                                (int) floatCoords[0],
+                                (int) floatCoords[1],
+                                (int) (floatCoords[2] - floatCoords[0]),
+                                (int) (floatCoords[3] - floatCoords[1])
+                            };
                             if (!foundCategories.ContainsKey(category))
                             {
-                                foundCategories[category] = new List<string>();
+                                foundCategories[category] = new List<Tuple<string, int[]>>();
                             }
-                            foundCategories[category].Add(imagePath);
+                            foundCategories[category].Add(new Tuple<string, int[]>(imagePath, coords));
                             this.Dispatcher.BeginInvoke(new Action(() =>
                             {
                                 Categories_ListBox.ItemsSource = null;
                                 Categories_ListBox.ItemsSource = foundCategories.Keys;
                             }));
 
-                            if (curCategory != null)
+                            if (category == curCategory)
                             {
-                                AddImageToPanel(imagePath);
+                                AddImageToPanel(imagePath, coords);
                             }
+                            UploadToDB(new DetectedObject() { 
+                                X      = coords[0],
+                                Y      = coords[1],
+                                Width  = coords[2],
+                                Height = coords[3],
+                                ClassName = category,
+                                Details = new DetectedObjectDetails() { Image = ImageToBytes(CropFromPath(imagePath, coords)) }
+                            });
                         }
                     }
                 }, TaskCreationOptions.LongRunning);
@@ -127,6 +144,39 @@ namespace YoloV4ObjectDetectorUI
         private void StopObjectsDetection_Click(object sender, RoutedEventArgs e)
         {
             modelApplier.StopDetection = true;
+        }
+
+        private void Refresh_DB_Click(object sender, RoutedEventArgs e)
+        {
+            reloadDB();
+        }
+
+        private void Clear_DB_Click(object sender, RoutedEventArgs e)
+        {
+            using (var db = new LibraryContext())
+            {
+                db.DetectedObjects.RemoveRange(db.DetectedObjects);
+                db.DetectedObjectsDetails.RemoveRange(db.DetectedObjectsDetails);
+                db.SaveChanges();
+            }
+            reloadDB();
+        }
+
+        private void reloadDB()
+        {
+            DB_Panel.Children.Clear();
+            using (var db = new LibraryContext())
+            {
+                foreach (var d in db.DetectedObjects)
+                {
+                    var tb = new TextBlock();
+                    tb.Text = $"ClassName: {d.ClassName}, Coords: ({d.X}, {d.Y}, {d.Width}, {d.Height})";
+                    tb.TextWrapping = TextWrapping.Wrap;
+                    tb.HorizontalAlignment = HorizontalAlignment.Center;
+                    tb.Margin = new Thickness(20, 0, 20, 10);
+                    DB_Panel.Children.Add(tb);
+                }
+            }
         }
 
         private void Categories_ListBox_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -144,32 +194,72 @@ namespace YoloV4ObjectDetectorUI
         {
             if (curCategory != null && foundCategories.ContainsKey(category))
             {
-                var th = new Thread(() => {
-                    this.Dispatcher.BeginInvoke(new Action(() => {
+                var th = new Thread(() =>
+                {
+                    this.Dispatcher.BeginInvoke(new Action(() =>
+                    {
                         ImagesPanel.Children.Clear();
                     }));
-                    var curFoundImages = new List<string>(foundCategories[category]);
-                    foreach (var imagePath in curFoundImages)
+                    var curFoundImages = new List<Tuple<string, int[]>>(foundCategories[category]);
+                    foreach (var image in curFoundImages)
                     {
-                        AddImageToPanel(imagePath);
+                        AddImageToPanel(image.Item1, image.Item2);
                     }
                 });
                 th.Start();
             }
         }
 
-        private void AddImageToPanel(string imagePath)
+        private void AddImageToPanel(string imagePath, int[] coords)
         {
-            this.Dispatcher.BeginInvoke(new Action(() => {
+            this.Dispatcher.BeginInvoke(new Action(() =>
+            {
                 Image image = new Image();
-                BitmapImage bi = new BitmapImage();
-                bi.BeginInit();
-                bi.UriSource = new Uri(imagePath);
-                bi.EndInit();
                 image.Stretch = Stretch.Fill;
-                image.Source = bi;
+                var cb = CropFromPath(imagePath, coords);
+                image.Source = cb;
                 ImagesPanel.Children.Add(image);
             }));
+        }
+
+        private static CroppedBitmap CropFromPath(string imagePath, int[] coords)
+        {
+            return new CroppedBitmap(
+                new BitmapImage(new Uri(imagePath)),
+                new Int32Rect(coords[0], coords[1], coords[2], coords[3]));
+        }
+
+        private static byte[] ImageToBytes(CroppedBitmap img)
+        {
+            byte[] data;
+            JpegBitmapEncoder encoder = new JpegBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(img));
+            using (MemoryStream ms = new MemoryStream())
+            {
+                encoder.Save(ms);
+                data = ms.ToArray();
+            }
+            return data;
+        }
+
+        private void UploadToDB(DetectedObject query)
+        {
+            using (var db = new LibraryContext())
+            {
+                // Checking if the same image is already in DB
+                var same_class = db.DetectedObjects.Where(d => d.ClassName == query.ClassName);
+                var same_coords = same_class.Where(c => c.X == query.X
+                                                     && c.Y == query.Y
+                                                     && c.Width == query.Width
+                                                     && c.Height == query.Height);
+                var same_thumbs = same_coords.ToArray().Where(d => d.Details.Image.SequenceEqual(query.Details.Image));
+                foreach (var t in same_thumbs)
+                {
+                    return;
+                }
+                db.Add(query);
+                db.SaveChanges();
+            }
         }
     }
 }
