@@ -29,6 +29,7 @@ namespace YoloV4ObjectDetectorUI
     class LibraryContext: DbContext
     {
         public DbSet<DetectedObject> DetectedObjects { get; set; }
+        public DbSet<DetectedObjectDetails> DetectedObjectsDetails { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder o)
             => o.UseLazyLoadingProxies().UseSqlite("Data Source=detected_objects.db");
     }

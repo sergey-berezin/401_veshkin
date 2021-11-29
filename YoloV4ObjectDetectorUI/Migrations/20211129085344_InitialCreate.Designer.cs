@@ -9,7 +9,7 @@ using YoloV4ObjectDetectorUI;
 namespace YoloV4ObjectDetectorUI.Migrations
 {
     [DbContext(typeof(LibraryContext))]
-    [Migration("20211129020014_InitialCreate")]
+    [Migration("20211129085344_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -60,7 +60,7 @@ namespace YoloV4ObjectDetectorUI.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("DetectedObjectDetails");
+                    b.ToTable("DetectedObjectsDetails");
                 });
 
             modelBuilder.Entity("YoloV4ObjectDetectorUI.DetectedObject", b =>

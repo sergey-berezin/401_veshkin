@@ -8,7 +8,7 @@ namespace YoloV4ObjectDetectorUI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "DetectedObjectDetails",
+                name: "DetectedObjectsDetails",
                 columns: table => new
                 {
                     ID = table.Column<int>(nullable: false)
@@ -17,7 +17,7 @@ namespace YoloV4ObjectDetectorUI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DetectedObjectDetails", x => x.ID);
+                    table.PrimaryKey("PK_DetectedObjectsDetails", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
@@ -37,9 +37,9 @@ namespace YoloV4ObjectDetectorUI.Migrations
                 {
                     table.PrimaryKey("PK_DetectedObjects", x => x.ObjectId);
                     table.ForeignKey(
-                        name: "FK_DetectedObjects_DetectedObjectDetails_DetailsID",
+                        name: "FK_DetectedObjects_DetectedObjectsDetails_DetailsID",
                         column: x => x.DetailsID,
-                        principalTable: "DetectedObjectDetails",
+                        principalTable: "DetectedObjectsDetails",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -56,7 +56,7 @@ namespace YoloV4ObjectDetectorUI.Migrations
                 name: "DetectedObjects");
 
             migrationBuilder.DropTable(
-                name: "DetectedObjectDetails");
+                name: "DetectedObjectsDetails");
         }
     }
 }

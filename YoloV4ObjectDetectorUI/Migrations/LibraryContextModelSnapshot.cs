@@ -58,7 +58,7 @@ namespace YoloV4ObjectDetectorUI.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("DetectedObjectDetails");
+                    b.ToTable("DetectedObjectsDetails");
                 });
 
             modelBuilder.Entity("YoloV4ObjectDetectorUI.DetectedObject", b =>

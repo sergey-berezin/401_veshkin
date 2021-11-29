@@ -156,6 +156,7 @@ namespace YoloV4ObjectDetectorUI
             using (var db = new LibraryContext())
             {
                 db.DetectedObjects.RemoveRange(db.DetectedObjects);
+                db.DetectedObjectsDetails.RemoveRange(db.DetectedObjectsDetails);
                 db.SaveChanges();
             }
             reloadDB();
@@ -251,7 +252,7 @@ namespace YoloV4ObjectDetectorUI
                                                      && c.Y == query.Y
                                                      && c.Width == query.Width
                                                      && c.Height == query.Height);
-                var same_thumbs = same_coords.Where(d => d.Details.Image == query.Details.Image);
+                var same_thumbs = same_coords.ToArray().Where(d => d.Details.Image.SequenceEqual(query.Details.Image));
                 foreach (var t in same_thumbs)
                 {
                     return;
