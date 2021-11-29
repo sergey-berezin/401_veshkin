@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:YoloV4ObjectDetectorUI"
         mc:Ignorable="d"
-        Title="MainWindow" Height="700" Width="1300">
+        Title="MainWindow" Height="700" Width="1600">
     <Grid>
         <StackPanel Grid.Column="0">
             <Border Background="White" Margin="20 30 20 0" VerticalAlignment="Top" Padding="20" CornerRadius="5">
@@ -49,9 +49,28 @@
             </Border>
         </StackPanel>
 
+        <StackPanel Grid.Column="3">
+        <Border Background="White" Margin="20 30 20 0" VerticalAlignment="Top" Padding="20" CornerRadius="5">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="30" Color="LightGray" ShadowDepth="0"/>
+            </Border.Effect>
+            <StackPanel>
+                    <TextBlock Text="Содержание базы данных:" Margin="0 0 0 10" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Click="Refresh_DB_Click" Margin="0 0 5 10" Padding="10" Content="Refresh"/>
+                        <Button Click="Clear_DB_Click" Margin="5 0 0 10" Padding="10" Content="Clear"/>
+                    </StackPanel>
+                <ScrollViewer MaxHeight="500">
+                    <StackPanel x:Name="DB_Panel"/>
+                </ScrollViewer>
+                </StackPanel>
+        </Border>
+        </StackPanel>
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"/>
             <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
             <ColumnDefinition Width="3*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
