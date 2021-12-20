@@ -7,7 +7,7 @@ using YoloV4ObjectDetectorUI;
 
 namespace YoloV4ObjectDetectorUI.Migrations
 {
-    [DbContext(typeof(LibraryContext))]
+    [DbContext(typeof(DetectedImagesContext))]
     partial class LibraryContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

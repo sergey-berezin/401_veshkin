@@ -176,6 +176,125 @@ namespace ParallelObjectDetection.DataStructures
             return resultsNms;
         }
 
+        public IReadOnlyList<YoloV4Result> GetResults(string imagePath,
+                                                      string[] categories,
+                                                      float scoreThres = 0.5f,
+                                                      float iouThres = 0.5f)
+        {
+            List<float[]> postProcesssedResults = new List<float[]>();
+            int classesCount = categories.Length;
+            var results = new[] { Identity, Identity1, Identity2 };
+            for (int i = 0; i < results.Length; i++)
+            {
+                var pred = results[i];
+                var outputSize = shapes[i];
+
+                for (int boxY = 0; boxY < outputSize; boxY++)
+                {
+                    for (int boxX = 0; boxX < outputSize; boxX++)
+                    {
+                        for (int a = 0; a < anchorsCount; a++)
+                        {
+                            var offset = (boxY * outputSize * (classesCount + 5) * anchorsCount) + (boxX * (classesCount + 5) * anchorsCount) + a * (classesCount + 5);
+                            var predBbox = pred.Skip(offset).Take(classesCount + 5).ToArray();
+
+                            // ported from https://github.com/onnx/models/tree/master/vision/object_detection_segmentation/yolov4#postprocessing-steps
+
+                            // postprocess_bbbox()
+                            var predXywh = predBbox.Take(4).ToArray();
+                            var predConf = predBbox[4];
+                            var predProb = predBbox.Skip(5).ToArray();
+
+                            var rawDx = predXywh[0];
+                            var rawDy = predXywh[1];
+                            var rawDw = predXywh[2];
+                            var rawDh = predXywh[3];
+
+                            float predX = ((Sigmoid(rawDx) * XYSCALE[i]) - 0.5f * (XYSCALE[i] - 1) + boxX) * STRIDES[i];
+                            float predY = ((Sigmoid(rawDy) * XYSCALE[i]) - 0.5f * (XYSCALE[i] - 1) + boxY) * STRIDES[i];
+                            float predW = (float)Math.Exp(rawDw) * ANCHORS[i][a][0];
+                            float predH = (float)Math.Exp(rawDh) * ANCHORS[i][a][1];
+
+                            // postprocess_boxes
+                            // (1) (x, y, w, h) --> (xmin, ymin, xmax, ymax)
+                            float predX1 = predX - predW * 0.5f;
+                            float predY1 = predY - predH * 0.5f;
+                            float predX2 = predX + predW * 0.5f;
+                            float predY2 = predY + predH * 0.5f;
+
+                            // (2) (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
+                            float org_h = ImageHeight;
+                            float org_w = ImageWidth;
+
+                            float inputSize = 416f;
+                            float resizeRatio = Math.Min(inputSize / org_w, inputSize / org_h);
+                            float dw = (inputSize - resizeRatio * org_w) / 2f;
+                            float dh = (inputSize - resizeRatio * org_h) / 2f;
+
+                            var orgX1 = 1f * (predX1 - dw) / resizeRatio; // left
+                            var orgX2 = 1f * (predX2 - dw) / resizeRatio; // right
+                            var orgY1 = 1f * (predY1 - dh) / resizeRatio; // top
+                            var orgY2 = 1f * (predY2 - dh) / resizeRatio; // bottom
+
+                            // (3) clip some boxes that are out of range
+                            orgX1 = Math.Max(orgX1, 0);
+                            orgY1 = Math.Max(orgY1, 0);
+                            orgX2 = Math.Min(orgX2, org_w - 1);
+                            orgY2 = Math.Min(orgY2, org_h - 1);
+                            if (orgX1 > orgX2 || orgY1 > orgY2) continue; // invalid_mask
+
+                            // (4) discard some invalid boxes
+                            // TODO
+
+                            // (5) discard some boxes with low scores
+                            var scores = predProb.Select(p => p * predConf).ToList();
+
+                            float scoreMaxCat = scores.Max();
+                            if (scoreMaxCat > scoreThres)
+                            {
+                                postProcesssedResults.Add(new float[] { orgX1, orgY1, orgX2, orgY2, scoreMaxCat, scores.IndexOf(scoreMaxCat) });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Non-maximum Suppression
+            postProcesssedResults = postProcesssedResults.OrderByDescending(x => x[4]).ToList(); // sort by confidence
+            List<YoloV4Result> resultsNms = new List<YoloV4Result>();
+
+            int f = 0;
+            while (f < postProcesssedResults.Count)
+            {
+                var res = postProcesssedResults[f];
+                if (res == null)
+                {
+                    f++;
+                    continue;
+                }
+
+                var conf = res[4];
+                string label = categories[(int)res[5]];
+
+                var foundResult = new YoloV4Result(res.Take(4).ToArray(), label, conf);
+                resultsNms.Add(foundResult);
+                postProcesssedResults[f] = null;
+
+                var iou = postProcesssedResults.Select(bbox => bbox == null ? float.NaN : BoxIoU(res, bbox)).ToList();
+                for (int i = 0; i < iou.Count; i++)
+                {
+                    if (float.IsNaN(iou[i])) continue;
+                    if (iou[i] > iouThres)
+                    {
+                        postProcesssedResults[i] = null;
+                    }
+                }
+                f++;
+            }
+
+            return resultsNms;
+        }
+
         /// <summary>
         /// expit = https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.expit.html
         /// </summary>

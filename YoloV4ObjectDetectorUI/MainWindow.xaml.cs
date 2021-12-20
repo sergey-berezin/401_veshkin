@@ -19,6 +19,8 @@ using System.Threading.Tasks.Dataflow;
 using ParallelObjectDetection;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace YoloV4ObjectDetectorUI
 {
@@ -27,8 +29,9 @@ namespace YoloV4ObjectDetectorUI
     /// </summary>
     public partial class MainWindow : Window
     {
+        HttpClient client = new HttpClient();
         string curDir = "Директория с изображениями не установлена";
-        string modelPath = "../../../../ParallelObjectDetection/yolov4.onnx";
+        string modelPath = "F:\\yolov4.onnx";
 
         string curCategory = null;
 
@@ -124,19 +127,11 @@ namespace YoloV4ObjectDetectorUI
                             {
                                 AddImageToPanel(imagePath, coords);
                             }
-                            UploadToDB(new DetectedObject() { 
-                                X      = coords[0],
-                                Y      = coords[1],
-                                Width  = coords[2],
-                                Height = coords[3],
-                                ClassName = category,
-                                Details = new DetectedObjectDetails() { Image = ImageToBytes(CropFromPath(imagePath, coords)) }
-                            });
                         }
                     }
                 }, TaskCreationOptions.LongRunning);
 
-                var results = await modelApplier.ApplyOnImagesAsync(imagePaths);
+                var results = await modelApplier.ApplyOnImagesAsync(imagePaths, "http://localhost:5000/api/Detection/apply-on-image");
                 foundAllObjects = true;
             }, TaskCreationOptions.LongRunning);
         }
@@ -151,23 +146,26 @@ namespace YoloV4ObjectDetectorUI
             reloadDB();
         }
 
-        private void Clear_DB_Click(object sender, RoutedEventArgs e)
+        private async void Clear_DB_Click(object sender, RoutedEventArgs e)
         {
-            using (var db = new LibraryContext())
+            try {
+                await client.GetStringAsync("http://localhost:5000/api/Detection/clear-db");
+            }
+            catch (HttpRequestException ex)
             {
-                db.DetectedObjects.RemoveRange(db.DetectedObjects);
-                db.DetectedObjectsDetails.RemoveRange(db.DetectedObjectsDetails);
-                db.SaveChanges();
+                MessageBox.Show(ex.Message, "Server Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             reloadDB();
         }
 
-        private void reloadDB()
+        private async void reloadDB()
         {
             DB_Panel.Children.Clear();
-            using (var db = new LibraryContext())
+            try
             {
-                foreach (var d in db.DetectedObjects)
+                string result = await client.GetStringAsync("http://localhost:5000/api/Detection/get-images");
+                var db_items = JsonConvert.DeserializeObject<List<DetectedObject>>(result);
+                foreach (var d in db_items)
                 {
                     var tb = new TextBlock();
                     tb.Text = $"ClassName: {d.ClassName}, Coords: ({d.X}, {d.Y}, {d.Width}, {d.Height})";
@@ -176,6 +174,10 @@ namespace YoloV4ObjectDetectorUI
                     tb.Margin = new Thickness(20, 0, 20, 10);
                     DB_Panel.Children.Add(tb);
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                MessageBox.Show(ex.Message, "Server Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -227,39 +229,6 @@ namespace YoloV4ObjectDetectorUI
             return new CroppedBitmap(
                 new BitmapImage(new Uri(imagePath)),
                 new Int32Rect(coords[0], coords[1], coords[2], coords[3]));
-        }
-
-        private static byte[] ImageToBytes(CroppedBitmap img)
-        {
-            byte[] data;
-            JpegBitmapEncoder encoder = new JpegBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(img));
-            using (MemoryStream ms = new MemoryStream())
-            {
-                encoder.Save(ms);
-                data = ms.ToArray();
-            }
-            return data;
-        }
-
-        private void UploadToDB(DetectedObject query)
-        {
-            using (var db = new LibraryContext())
-            {
-                // Checking if the same image is already in DB
-                var same_class = db.DetectedObjects.Where(d => d.ClassName == query.ClassName);
-                var same_coords = same_class.Where(c => c.X == query.X
-                                                     && c.Y == query.Y
-                                                     && c.Width == query.Width
-                                                     && c.Height == query.Height);
-                var same_thumbs = same_coords.ToArray().Where(d => d.Details.Image.SequenceEqual(query.Details.Image));
-                foreach (var t in same_thumbs)
-                {
-                    return;
-                }
-                db.Add(query);
-                db.SaveChanges();
-            }
         }
     }
 }
