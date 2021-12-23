@@ -10,7 +10,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YoloV4ObjectDetector", "..\
 		{6E78FE3B-D943-4F12-B0D9-ECCBCA3A84A2} = {6E78FE3B-D943-4F12-B0D9-ECCBCA3A84A2}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoloV4ObjectDetectorUI", "..\YoloV4ObjectDetectorUI\YoloV4ObjectDetectorUI.csproj", "{A60B7D69-4C56-4EEA-AB83-106770F5739B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YoloV4ObjectDetectorUI", "..\YoloV4ObjectDetectorUI\YoloV4ObjectDetectorUI.csproj", "{A60B7D69-4C56-4EEA-AB83-106770F5739B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DetectionService", "..\DetectionService\DetectionService.csproj", "{92A8A016-3DB7-4EE5-AC0A-BA6E16A5ECD1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +32,10 @@ Global
 		{A60B7D69-4C56-4EEA-AB83-106770F5739B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A60B7D69-4C56-4EEA-AB83-106770F5739B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A60B7D69-4C56-4EEA-AB83-106770F5739B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92A8A016-3DB7-4EE5-AC0A-BA6E16A5ECD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92A8A016-3DB7-4EE5-AC0A-BA6E16A5ECD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92A8A016-3DB7-4EE5-AC0A-BA6E16A5ECD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92A8A016-3DB7-4EE5-AC0A-BA6E16A5ECD1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

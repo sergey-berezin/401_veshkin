@@ -26,7 +26,7 @@ namespace YoloV4ObjectDetectorUI
         public byte[] Image { get; set; }
     }
 
-    class LibraryContext: DbContext
+    public class DetectedImagesContext: DbContext
     {
         public DbSet<DetectedObject> DetectedObjects { get; set; }
         public DbSet<DetectedObjectDetails> DetectedObjectsDetails { get; set; }

@@ -8,6 +8,8 @@ using ParallelObjectDetection.DataStructures;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using static Microsoft.ML.Transforms.Image.ImageResizingEstimator;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace ParallelObjectDetection
 {
@@ -55,6 +57,41 @@ namespace ParallelObjectDetection
                 var detectedObjects = ApplyOnImage(imagePath);
                 result.Add(imagePath, detectedObjects);
             }, new ExecutionDataflowBlockOptions{ MaxDegreeOfParallelism = Environment.ProcessorCount });
+
+            var buffer = new BufferBlock<string>();
+            buffer.LinkTo(modelApplier);
+            _ = buffer.Completion.ContinueWith(task => modelApplier.Complete());
+
+            Parallel.ForEach(imagePaths, imagePath => buffer.Post(imagePath));
+            buffer.Complete();
+
+            await modelApplier.Completion;
+            return result;
+        }
+
+        public async Task<Dictionary<string, List<YoloV4Result>>> ApplyOnImagesAsync(List<string> imagePaths, string serverApi)
+        {
+            HttpClient client = new HttpClient();
+            StopDetection = false;
+            foundObjectsBuffer = new BufferBlock<KeyValuePair<string, YoloV4Result>>();
+            var result = new Dictionary<string, List<YoloV4Result>>();
+
+            var modelApplier = new ActionBlock<string>(async imagePath =>
+            {
+                if (StopDetection)
+                {
+                    return;
+                }
+                
+                string requestResult = await client.GetStringAsync($"{serverApi}?imagePath={imagePath}&modelPath={modelPath}");
+                var detectedObjects = JsonConvert.DeserializeObject<List<YoloV4Result>>(requestResult);
+
+                foreach (var foundResult in detectedObjects)
+                {
+                    foundObjectsBuffer.Post(new KeyValuePair<string, YoloV4Result>(imagePath, foundResult));
+                }
+                result.Add(imagePath, detectedObjects);
+            }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 });
 
             var buffer = new BufferBlock<string>();
             buffer.LinkTo(modelApplier);

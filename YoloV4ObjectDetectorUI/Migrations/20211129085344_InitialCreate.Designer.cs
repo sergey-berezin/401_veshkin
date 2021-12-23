@@ -8,7 +8,7 @@ using YoloV4ObjectDetectorUI;
 
 namespace YoloV4ObjectDetectorUI.Migrations
 {
-    [DbContext(typeof(LibraryContext))]
+    [DbContext(typeof(DetectedImagesContext))]
     [Migration("20211129085344_InitialCreate")]
     partial class InitialCreate
     {
